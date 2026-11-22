@@ -1,5 +1,5 @@
 /*
-  FridgeIQ data
+  Ripeline data
   -------------
   This file holds the LISTS the app uses (recipes are in js/recipes.js):
     FOOD_CATALOG – foods you can pick from on the Add Food screen

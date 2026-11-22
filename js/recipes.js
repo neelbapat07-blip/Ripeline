@@ -1,5 +1,5 @@
 /*
-  FridgeIQ recipe database
+  Ripeline recipe database
   ------------------------
   Built-in recipes: affordable, beginner-friendly meals. No internet or paid
   service needed. To add a recipe, copy one block below and change it.

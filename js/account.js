@@ -1,7 +1,7 @@
 /*
-  FridgeIQ accounts (optional)
+  Ripeline accounts (optional)
   ----------------------------
-  People can use FridgeIQ without an account. Creating one:
+  People can use Ripeline without an account. Creating one:
     - stores their name and email with Supabase (the account service),
     - sends them a welcome email with a "confirm my email" button
       (the email itself is set up in the Supabase dashboard, not in this file),
@@ -48,7 +48,7 @@ function friendlyAuthError(error) {
   if (code === "AuthRetryableFetchError" || /fetch|network/i.test(message)) {
     // Status 0 = no connection at all. 500+ = the account service answered but had a problem.
     if (!error.status) return "Couldn't reach the account service. Check your internet connection and try again.";
-    if (/email|sending|smtp/i.test(message)) return "Your account couldn't be created because the welcome email couldn't be sent. Please try again later. (FridgeIQ's email settings may need fixing.)";
+    if (/email|sending|smtp/i.test(message)) return "Your account couldn't be created because the welcome email couldn't be sent. Please try again later. (Ripeline's email settings may need fixing.)";
     return `The account service had a problem (error ${error.status}). Please try again in a few minutes.`;
   }
   if (code === "invalid_credentials") return "That email and password don't match. Check them and try again.";
@@ -239,7 +239,7 @@ document.getElementById("account-log-out").addEventListener("click", async () =>
 /* Delete account: needs the small "delete_user" setup in Supabase (see README) */
 document.getElementById("account-delete").addEventListener("click", async () => {
   if (!authClient || !currentUser) return;
-  if (!confirm("Delete your FridgeIQ account? Your name and email will be removed from our account service. Food saved on this device stays unless you also use “Delete all my data”.")) return;
+  if (!confirm("Delete your Ripeline account? Your name and email will be removed from our account service. Food saved on this device stays unless you also use “Delete all my data”.")) return;
   const { error } = await authClient.rpc("delete_user");
   if (error) {
     accountMessage("Sorry, your account couldn't be deleted right now. Please try again later.", "error");
@@ -274,7 +274,7 @@ if (authClient) {
     if (returnedFromEmail && returnedFromEmail.type === "signup" && currentUser) {
       history.replaceState(null, "", "#profile");
       showScreen();
-      showToast("Your email is confirmed. Welcome to FridgeIQ! 🎉");
+      showToast("Your email is confirmed. Welcome to Ripeline! 🎉");
     }
     renderAccountRow();
   });

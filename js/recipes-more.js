@@ -1,5 +1,5 @@
 /*
-  FridgeIQ recipe database, part 2
+  Ripeline recipe database, part 2
   --------------------------------
   More budget-friendly recipes, added to the list in js/recipes.js.
   Same format as js/recipes.js.

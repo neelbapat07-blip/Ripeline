@@ -1,12 +1,12 @@
 /*
-  FridgeIQ storage
+  Ripeline storage
   ----------------
   This file is the ONLY place that saves and loads your data.
 
   WHERE YOUR DATA LIVES
   Everything is kept in this browser's "localStorage": a small private storage
   area that belongs to this website, in this browser, on this device.
-    - Each browser and device has its own separate FridgeIQ data.
+    - Each browser and device has its own separate Ripeline data.
     - Nothing is sent to a server, and nobody else can see it.
     - It stays after refreshing or closing the browser, until you delete it
       (Profile → Privacy Settings → Delete all my data, or by clearing site data).
@@ -24,6 +24,8 @@
       message, and your previously saved data is left untouched.
 */
 
+/* Note: these names still start with "fridgeiq." (the app's original name). They are never
+   shown to anyone, and renaming them would make everyone's saved data disappear, so they stay. */
 const STORAGE_KEYS = {
   items:    "fridgeiq.items.v1",
   shopping: "fridgeiq.shopping.v1",
@@ -31,7 +33,7 @@ const STORAGE_KEYS = {
   prefs:    "fridgeiq.prefs.v1",
 };
 
-/* Data left behind by older versions of FridgeIQ (AI recipes and an API key) */
+/* Data left behind by older versions of Ripeline (AI recipes and an API key) */
 const RETIRED_KEYS = ["fridgeiq.claudeKey.v1", "fridgeiq.recipes.v1", "fridgeiq.steps.v1"];
 
 const FridgeStorage = (() => {
@@ -126,7 +128,7 @@ const FridgeStorage = (() => {
     }
   }
 
-  /* Removes every piece of FridgeIQ data from this browser (including backups and the account login) */
+  /* Removes every piece of Ripeline data from this browser (including backups and the account login) */
   function deleteEverything() {
     try {
       Object.keys(window.localStorage)
@@ -143,7 +145,7 @@ const FridgeStorage = (() => {
     notify();
   }
 
-  /* Runs `callback` when FridgeIQ data is changed in ANOTHER tab of this same browser */
+  /* Runs `callback` when Ripeline data is changed in ANOTHER tab of this same browser */
   function onOtherTabChange(callback) {
     window.addEventListener("storage", (event) => {
       if (event.key === null || String(event.key).startsWith("fridgeiq.")) callback(event.key);

@@ -1,5 +1,5 @@
 /*
-  FridgeIQ behaviour
+  Ripeline behaviour
   ------------------
   This file controls what happens when you TAP things, and builds the parts
   of each screen that change (lists, counts, tags).
@@ -53,7 +53,7 @@ function showStorageStatus(status) {
   const banner = document.getElementById("storage-warning");
   const messages = [];
   if (status.saveProblem === "blocked") {
-    messages.push("This browser is blocking storage (for example, private browsing), so FridgeIQ can't save. Your changes will be lost when you close it.");
+    messages.push("This browser is blocking storage (for example, private browsing), so Ripeline can't save. Your changes will be lost when you close it.");
   } else if (status.saveProblem === "full") {
     messages.push("Your last change couldn't be saved because this browser's storage is full. Everything saved before is still safe. Try removing some items, or free up space in your browser settings.");
   }
@@ -67,7 +67,7 @@ function showStorageStatus(status) {
 
 FridgeStorage.onStatusChange(showStorageStatus);
 
-/* If FridgeIQ is open in another tab and you change something there, update this tab too
+/* If Ripeline is open in another tab and you change something there, update this tab too
    (so the two tabs never overwrite each other's changes). */
 FridgeStorage.onOtherTabChange(() => {
   loadAllData();
@@ -468,7 +468,7 @@ document.getElementById("privacy-toggle").addEventListener("click", (event) => {
   event.currentTarget.classList.toggle("is-open", !panel.hidden);
 });
 document.getElementById("delete-data").addEventListener("click", () => {
-  if (!confirm("Delete all FridgeIQ data on this device? This removes your food, shopping list, profile, preferences and any backups, and can't be undone.")) return;
+  if (!confirm("Delete all Ripeline data on this device? This removes your food, shopping list, profile, preferences and any backups, and can't be undone.")) return;
   if (!FridgeStorage.deleteEverything()) {
     showToast("Couldn't delete the data. Try clearing this site's data in your browser settings.");
     return;

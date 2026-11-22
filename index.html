@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#c1fbb0">
-  <title>FridgeIQ</title>
+  <title>Ripeline</title>
 
   <!-- The "Inter" font, the same one used in the Figma designs -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,7 +24,7 @@
     from the food you've saved, so they change as you add and remove food.
   -->
   <div class="app">
-    <!-- Shows a message if this browser can't save FridgeIQ data (filled in by js/app.js) -->
+    <!-- Shows a message if this browser can't save Ripeline data (filled in by js/app.js) -->
     <p class="storage-warning" id="storage-warning" role="alert" hidden></p>
 
     <!-- ============ SCREEN 0: MY PROFILE (the app starts here) ============ -->
@@ -90,7 +90,7 @@
         </button>
         <div class="privacy-panel" id="privacy-panel" hidden>
           <p>Your food, shopping list and preferences are stored only in this browser on this device and are never uploaded.</p>
-          <p>Accounts are optional. If you create one, your name and email are stored with Supabase, the service that runs FridgeIQ accounts, so you can log in and receive account emails (like the welcome email). You can delete your account any time from the account screen.</p>
+          <p>Accounts are optional. If you create one, your name and email are stored with Supabase, the service that runs Ripeline accounts, so you can log in and receive account emails (like the welcome email). You can delete your account any time from the account screen.</p>
           <button class="small-button small-button--danger" type="button" id="delete-data">Delete all my data</button>
         </div>
         <button class="settings-row" type="button" id="log-out">
@@ -102,7 +102,7 @@
 
     <!-- ============ SCREEN 1: HOME DASHBOARD ============ -->
     <section class="screen" id="home" data-tab="home">
-      <h1 class="title title--bold">FridgeIQ</h1>
+      <h1 class="title title--bold">Ripeline</h1>
       <p class="subtitle" id="greeting">Good Afternoon Neel!</p>
 
       <a class="summary-card" href="#fridge">
@@ -265,7 +265,7 @@
       <p class="subtitle" id="account-subtitle">Free, optional, and takes a minute</p>
 
       <p class="account-message" id="account-unavailable" hidden>
-        Accounts aren't available right now (you may be offline). Everything else in FridgeIQ still works.
+        Accounts aren't available right now (you may be offline). Everything else in Ripeline still works.
       </p>
 
       <!-- Shown when logged in -->
@@ -306,7 +306,7 @@
         <button class="big-button account-submit" type="submit" form="account-form" id="account-submit">Create Account</button>
         <button class="text-button" type="button" id="account-forgot" hidden>Forgot your password?</button>
         <button class="text-button" type="button" id="account-back-to-login" hidden>← Back to Log In</button>
-        <p class="account-note">You don't need an account to use FridgeIQ. Your food and shopping list stay on this device either way.</p>
+        <p class="account-note">You don't need an account to use Ripeline. Your food and shopping list stay on this device either way.</p>
       </div>
 
       <a class="text-button" href="#profile">← Back to Profile</a>

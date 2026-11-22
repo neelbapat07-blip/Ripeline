@@ -1,9 +1,9 @@
-# FridgeIQ
+# Ripeline
 
 A phone-friendly website that helps you keep track of the food in your fridge
 and find recipes that use it before it goes bad.
 
-FridgeIQ runs in the browser, with no paid services. Your food, shopping list and
+Ripeline runs in the browser, with no paid services. Your food, shopping list and
 preferences are saved in the browser on your device. Accounts are optional (see below).
 
 ## Where your data is saved
@@ -75,7 +75,7 @@ Download the project, **extract the ZIP** (right-click → Extract All), then do
 
 ## Accounts and the welcome email (optional)
 
-FridgeIQ works without an account. People who want one can tap
+Ripeline works without an account. People who want one can tap
 **Profile → Create Account / Log In**. Accounts are run by **Supabase** (free plan):
 
 - **Sign up** stores the person's name and email with Supabase and sends a **welcome email**
@@ -110,7 +110,7 @@ It only lets a logged-in person delete **their own** account.
 
 ## How recipe matching works
 
-For each recipe, FridgeIQ checks every required ingredient against My Fridge
+For each recipe, Ripeline checks every required ingredient against My Fridge
 (optional extras such as garnishes don't count against you). Similar foods count as a
 match, for example any cheese works for "Cheese" and Greek yogurt works for "Yogurt".
 These are listed in `INGREDIENT_ALIASES` in `js/recipes.js`.

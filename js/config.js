@@ -1,5 +1,5 @@
 /*
-  FridgeIQ settings for Supabase (the free service that runs accounts and sends the welcome email)
+  Ripeline settings for Supabase (the free service that runs accounts and sends the welcome email)
 
   These two values are PUBLIC by design: Supabase expects them to be inside the app.
   They only let the app ask Supabase to sign people up and log them in.
