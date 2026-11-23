@@ -6,8 +6,9 @@
 
   Everything runs inside the browser, with no paid APIs. You need a free account
   to use Ripeline (sign up, log in and the welcome email are in js/account.js).
-  Each account's food, shopping list and preferences are saved in this browser
-  on this device, separately for each account.
+  Each account's food, shopping list and preferences are saved in the account
+  (js/sync.js), so they're the same on every device, with a copy on this device
+  so the app also works offline.
 
   It is split into numbered parts:
     1. Saving & loading
@@ -48,14 +49,19 @@ function loadAllData() {
 }
 loadAllData();
 
+/* Every save goes to this device first (works offline), then to the account (js/sync.js) */
+function syncSoon() {
+  if (typeof markChanged === "function") markChanged();
+}
 const saveItems = () => {
   const ok = FridgeStorage.save(STORAGE_KEYS.items, items);
-  if (typeof scheduleReminderSync === "function") scheduleReminderSync();   // keep reminder emails up to date
+  syncSoon();
+  if (typeof scheduleReminderSync === "function") scheduleReminderSync();   // keep reminder settings fresh
   return ok;
 };
-const saveProfile = () => FridgeStorage.save(STORAGE_KEYS.profile, profile);
-const savePrefs = () => FridgeStorage.save(STORAGE_KEYS.prefs, prefs);
-const saveShopping = () => { const ok = FridgeStorage.save(STORAGE_KEYS.shopping, shoppingList); updateShoppingBadge(); return ok; };
+const saveProfile = () => { const ok = FridgeStorage.save(STORAGE_KEYS.profile, profile); syncSoon(); return ok; };
+const savePrefs = () => { const ok = FridgeStorage.save(STORAGE_KEYS.prefs, prefs); syncSoon(); return ok; };
+const saveShopping = () => { const ok = FridgeStorage.save(STORAGE_KEYS.shopping, shoppingList); updateShoppingBadge(); syncSoon(); return ok; };
 
 /* The yellow banner at the top explains any saving problem until it's fixed */
 function showStorageStatus(status) {
@@ -499,14 +505,18 @@ document.getElementById("privacy-toggle").addEventListener("click", (event) => {
   event.currentTarget.classList.toggle("is-open", !panel.hidden);
 });
 document.getElementById("delete-data").addEventListener("click", async () => {
-  if (!confirm("Delete all your Ripeline data on this device? This removes your food, shopping list, profile, preferences and any backups, and logs you out. It can't be undone. (Your account itself stays; delete it from the account screen.)")) return;
-  if (typeof stopReminders === "function") await stopReminders();   // also removes the reminder copy
+  if (!confirm("Delete all your Ripeline data? This removes your food, shopping list, profile and preferences from your account (on every device) and from this device, and logs you out. It can't be undone. (Your account itself stays; delete it from the account screen.)")) return;
+  if (typeof stopReminders === "function") await stopReminders();   // also turns off reminder emails
+  if (typeof deleteAccountCloudData === "function" && !(await deleteAccountCloudData())) {
+    showToast("Couldn't delete your data from your account. Check your internet connection and try again.");
+    return;
+  }
   if (!FridgeStorage.deleteAccountData()) {
     showToast("Couldn't delete the data. Try clearing this site's data in your browser settings.");
     return;
   }
   if (typeof signOutOfAccount === "function") await signOutOfAccount();
-  showToast("Your data was deleted from this device");
+  showToast("Your data was deleted");
 });
 
 /* Re-apply saved preferences to the screens (after a different account's data is loaded) */

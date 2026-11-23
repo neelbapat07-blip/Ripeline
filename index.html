@@ -44,6 +44,8 @@
         <button class="profile-card__edit" id="profile-edit" type="button">Edit Profile</button>
       </div>
 
+      <p class="sync-status" id="sync-status"></p>
+
       <!-- Edit form (hidden until "Edit Profile" is tapped) -->
       <form class="panel" id="profile-form" hidden>
         <label class="panel__label" for="profile-name-input">Name</label>
@@ -117,10 +119,9 @@
           <svg class="settings-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
         <div class="privacy-panel" id="privacy-panel" hidden>
-          <p>Your food, shopping list and preferences are stored only in this browser on this device, separately for each account.</p>
-          <p>If you turn on <b>expiry reminder emails</b>, Ripeline also keeps a copy of your food names and expiration dates with Supabase so it can email you. Turning reminders off deletes that copy.</p>
-          <p>To use Ripeline you need a free account. Your name and email are stored with Supabase, the service that runs Ripeline accounts, so you can log in and receive account emails (like the welcome email). You can delete your account any time from the account screen.</p>
-          <button class="small-button small-button--danger" type="button" id="delete-data">Delete my data from this device</button>
+          <p>Your food, shopping list and preferences are saved in your Ripeline account, so they're the same on every device you log in on. A copy is also kept on each device so Ripeline works offline. Only you can see your data.</p>
+          <p>Accounts and your data are stored with Supabase, the service that runs Ripeline accounts. Your email is used to log in and for account emails (like the welcome email, and expiry reminders if you turn them on). You can delete your data or your whole account any time.</p>
+          <button class="small-button small-button--danger" type="button" id="delete-data">Delete all my data</button>
         </div>
         <button class="settings-row" type="button" id="log-out" hidden>
           Log Out
@@ -335,7 +336,7 @@
         <button class="big-button account-submit" type="submit" form="account-form" id="account-submit">Create Account</button>
         <button class="text-button" type="button" id="account-forgot" hidden>Forgot your password?</button>
         <button class="text-button" type="button" id="account-back-to-login" hidden>← Back to Log In</button>
-        <p class="account-note">A free account keeps your Ripeline fridge yours. Your food and shopping list are saved only on this device and are never uploaded.</p>
+        <p class="account-note">A free account keeps your fridge and shopping list in sync on every device you use, like your phone and laptop.</p>
       </div>
 
       <a class="text-button account-back" href="#profile">← Back to Profile</a>
@@ -400,7 +401,10 @@
   <script src="js/recipes.js"></script>
   <script src="js/recipes-more.js"></script>
   <script src="js/app.js"></script>
-  <script src="js/account.js"></script>
+  <!-- reminders.js and sync.js must load BEFORE account.js: account.js may report
+       "already logged in" straight away and then uses both of them -->
   <script src="js/reminders.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/account.js"></script>
 </body>
 </html>

@@ -12,10 +12,12 @@
       (Profile → Privacy Settings → Delete all my data, or by clearing site data).
 
   EACH ACCOUNT HAS ITS OWN DATA
-  You need an account to use Ripeline. Each account's data is saved separately
-  on the device (the key name ends with the account's id), so two people who
-  share a laptop never see each other's fridge. The very first account to log
-  in on a device takes over any data saved there before accounts existed.
+  You need an account to use Ripeline. The account's data lives in Supabase and
+  is synced to every device (js/sync.js). This file keeps the device's copy, so
+  the app works offline. Each account's copy is saved separately on the device
+  (the key name ends with the account's id), so two people who share a laptop
+  never see each other's fridge. The very first account to log in on a device
+  takes over any data saved there before accounts existed.
 
   WHAT IS SAVED (each under its own name, called a "key")
     fridgeiq.items.v1     your food: names, categories, storage, quantities, expiration dates

@@ -9,8 +9,8 @@
       (the email itself is set up in the Supabase dashboard, not in this file),
     - lets them log in again later.
 
-  Food, shopping list and preferences are NOT uploaded: they stay in this
-  browser, separately for each account (see js/storage.js).
+  Each account's food, shopping list and preferences are stored in the account
+  and synced to every device it logs in on (see js/sync.js).
 
   Screens: the "Your Account" screen (#account) handles sign up, log in,
   forgotten passwords and deleting the account.
@@ -267,6 +267,7 @@ document.getElementById("account-resend").addEventListener("click", async () => 
 
 /* Log out (from the account screen or the Profile screen's Log Out row) */
 async function signOutOfAccount() {
+  if (typeof stopAccountSync === "function") await stopAccountSync();      // send any last changes first
   if (authClient && currentUser) await authClient.auth.signOut().catch(() => {});
   accountMode = "login";            // next time, show Log In with the email already filled in
   lockApp();
@@ -279,9 +280,11 @@ document.getElementById("account-log-out").addEventListener("click", async () =>
 /* Delete account: needs the small "delete_user" setup in Supabase (see README) */
 document.getElementById("account-delete").addEventListener("click", async () => {
   if (!authClient || !currentUser) return;
-  if (!confirm("Delete your Ripeline account? Your name and email will be removed from our account service, and your food, shopping list and settings will be erased from this device. This can't be undone.")) return;
+  if (!confirm("Delete your Ripeline account? Your name, email, food, shopping list and settings will be erased from your account and from this device. This can't be undone.")) return;
+  if (typeof cancelAccountSync === "function") cancelAccountSync();   // stop syncing before deleting
   const { error } = await authClient.rpc("delete_user");
   if (error) {
+    if (typeof startAccountSync === "function") startAccountSync();     // nothing was deleted: carry on syncing
     accountMessage("Sorry, your account couldn't be deleted right now. Please try again later.", "error");
     return;
   }
@@ -314,7 +317,10 @@ function unlockApp(user) {
     updateShoppingBadge();
     showStorageStatus(FridgeStorage.status());
     // Go to Home, unless the address already names a real screen (e.g. a bookmarked #recipes)
-    if (typeof loadRemindersForAccount === "function") loadRemindersForAccount();
+    // Load this account's latest data (from every device), then its reminder settings
+    const afterSync = () => { if (typeof loadRemindersForAccount === "function") loadRemindersForAccount(); };
+    if (typeof startAccountSync === "function") startAccountSync().then(afterSync, afterSync);
+    else afterSync();
     const { name } = readAddress();
     const isScreen = name && document.getElementById(SCREEN_ALIASES[name] || name) && document.getElementById(SCREEN_ALIASES[name] || name).classList.contains("screen");
     const emptyAddress = !location.hash.replace("#", "");
@@ -328,6 +334,8 @@ function unlockApp(user) {
 
 /* Nobody is logged in: hide everything except Sign Up / Log In */
 function lockApp() {
+  if (typeof stopListening === "function") stopListening();
+  if (typeof syncStarted !== "undefined") syncStarted = false;
   currentUser = null;
   appUnlocked = false;
   FridgeStorage.stopUsingAccount();

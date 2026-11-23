@@ -1133,3 +1133,8 @@ body.is-locked .screen { padding-bottom: 40px; }
 .reminders-options { margin-top: 14px; }
 .reminders-options .field__input { margin-top: 6px; background: #f3f3f3; }
 #reminders-card .white-card__note { margin-top: 12px; }
+
+/* Account sync status (Profile) */
+.sync-status { margin-top: 8px; font-size: 12px; color: #555; min-height: 15px; }
+.sync-status--ok { color: #2d5a1e; }
+.sync-status--warn { color: #8a5a00; }

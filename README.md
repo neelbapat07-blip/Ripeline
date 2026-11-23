@@ -8,36 +8,36 @@ Your food, shopping list and preferences are saved in the browser on your device
 
 ## Where your data is saved
 
-Everything is saved in the browser's **localStorage**, which belongs to this website,
-in that one browser, on that one device:
+Your food, shopping list, profile and preferences are saved **in your Ripeline account**
+(Supabase table `user_data`), so they're the **same on every device** you log in on, like your
+phone and your laptop. Only you can read your account's data.
 
-- **Each browser and device has its own separate data.** Your phone, your laptop, and a
-  friend's phone each have their own fridge. Nothing is shared or synced.
-- **Your food data stays on the device.** Supabase stores your name and email for your account, and, only
-  if you turn on expiry reminder emails, your food names and expiration dates.
-- **It saves automatically** every time you add, edit or delete food, change the shopping
-  list, or change your profile, theme, sort order or recipe filter.
-- **It loads automatically** when you open the app, and survives refreshing and closing the browser.
+- **Every change syncs automatically** a moment after you make it. Other open devices update live,
+  or as soon as you switch back to the app.
+- **Works offline:** each device also keeps a copy in the browser (`localStorage`). Changes made
+  offline are sent when you're back online. If two devices change things at the same moment,
+  the most recent save wins.
+- **First time a device links up**, any food already saved on it is combined with the account's
+  food, so nothing is lost.
 - **New users start with an empty fridge.** The food list in `js/data.js` only provides
   choices for the Add Food screen.
-- **Open in two tabs?** They stay in sync and never overwrite each other.
+- Profile shows a small sync status line (e.g. "All changes saved to your account ✓").
 
-| Saved under | What |
-|---|---|
-| `fridgeiq.items.v1` | Food: names, categories, storage, quantities, units, expiration dates |
-| `fridgeiq.shopping.v1` | Shopping list |
-| `fridgeiq.profile.v1` | Name, email, colour theme |
-| `fridgeiq.prefs.v1` | Sort order and filters |
-
-**If something goes wrong**, a yellow message appears at the top:
-- *Saving is blocked* (e.g. private browsing): the app works but can't keep changes.
-- *Storage is full*: the latest change wasn't saved, and everything saved before is untouched.
+**If something goes wrong**, a yellow message appears at the top (for this device's copy):
+- *Saving is blocked* (e.g. private browsing): the app works but can't keep changes on the device.
+- *Storage is full*: the latest change wasn't saved on the device; everything saved before is untouched.
 - *Saved data couldn't be read*: readable entries are kept and the original is copied to a
   `.backup` entry, so nothing is silently erased.
 
-To remove your data: **Profile → Privacy Settings → Delete my data from this device**. This only affects the
-current browser. Data stored by a different website address (for example the GitHub Pages link
-vs. the Vercel link) is separate, even on the same phone.
+To remove your data: **Profile → Privacy Settings → Delete all my data**. This erases it from your
+account (on every device) and from this device, and logs you out. The account itself stays until
+you delete it on the account screen.
+
+### One-time setup for syncing (Supabase dashboard)
+Open [`supabase/account-sync.sql`](supabase/account-sync.sql), copy all of it, paste it into
+**Supabase → SQL Editor → New query**, and click **Run**. If you use expiry reminder emails, run
+[`supabase/expiry-reminders.sql`](supabase/expiry-reminders.sql) again afterwards, so reminders read
+the synced food.
 
 ## How to open it
 
@@ -88,8 +88,8 @@ the app only shows the **Sign Up / Log In** screen. Accounts are run by **Supaba
   already filled in with your email. The app never stores passwords; your phone's password
   manager can save it. To erase your data from a device, use Privacy Settings → Delete my data from this device.
 - **Only name and email** go to Supabase. Food, shopping list and preferences stay in the
-  browser on each device, **separately for each account**, so people sharing a device never see
-  each other's fridge. The first account to log in on a device takes over any food saved there before.
+  account and sync to every device it logs in on. People sharing a device never see each other's
+  fridge.
 
 The public Supabase address and *publishable* key are in `js/config.js`. They are meant
 to be public. **Never** put the secret/service_role key or any password in the app.
@@ -163,6 +163,8 @@ Salt, pepper, cooking oil and water are assumed to be in every kitchen.
 |---|---|
 | `index.html` | The **content**: all the screens, their text, pictures and buttons |
 | `css/styles.css` | The **looks**: colours, sizes, spacing. The colours at the top come from Figma |
+| `js/sync.js` | **Account sync**: keeps food, shopping list and settings the same on every device |
+| `supabase/account-sync.sql` | One-time Supabase setup for account sync (table, privacy rules, live updates) |
 | `js/reminders.js` | **Expiry reminder emails** setting (Profile → Notifications) |
 | `supabase/expiry-reminders.sql` | One-time Supabase setup for reminder emails (table, daily check, timer) |
 | `js/account.js` | **Optional accounts**: sign up, log in, password reset, delete account |

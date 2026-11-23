@@ -5,14 +5,12 @@
   when to be reminded (on the day, or 1–7 days before food expires).
 
   HOW IT WORKS
-  Food normally lives only on the device. A phone can't send emails while the
-  app is closed, so when reminders are ON this file keeps a small copy of just
-  the FOOD NAMES and EXPIRATION DATES in the Supabase database (table
-  "expiry_reminders"). Once a day, Supabase checks that table and sends one
-  email (through Brevo) listing food that's about to expire. Each food is
-  mentioned only once.
+  This file stores the person's reminder choice in the Supabase table
+  "expiry_reminders". Once a day, Supabase looks at the food in their account
+  (synced by js/sync.js) and sends one email (through Brevo) listing food
+  that's about to expire. Each food is mentioned only once.
 
-  Turning reminders OFF deletes that copy. Deleting the account deletes it too.
+  Turning reminders OFF removes the reminder choice. Deleting the account deletes it too.
   The server-side part (table, daily timer, email) is set up once in the
   Supabase dashboard — see "Expiry reminder emails" in the README.
 */
@@ -66,7 +64,7 @@ async function syncReminders() {
         name: profile.name || "",
         enabled: true,
         days_before: settings.daysBefore,
-        items: reminderItems(),
+        items: [],                       // reminders read the food from the account's synced list
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
       if (error) throw error;
@@ -87,7 +85,7 @@ function scheduleReminderSync() {
   reminderSyncTimer = setTimeout(syncReminders, 1500);
 }
 
-/* Used by "Delete my data from this device": stop reminders and remove the copy */
+/* Used by "Delete all my data": turn reminders off */
 async function stopReminders() {
   if (!reminderSettings().enabled) return;
   saveReminderSettings({ ...reminderSettings(), enabled: false });
@@ -102,7 +100,7 @@ function renderReminders() {
   document.getElementById("reminders-options").hidden = !settings.enabled;
   const email = currentUser ? currentUser.email : "your account email";
   document.getElementById("reminders-note").textContent = settings.enabled
-    ? `Reminders go to ${email}, at most once a day, and mention each food only once. While reminders are on, Ripeline keeps a copy of your food names and expiration dates with Supabase so it can email you. Turning reminders off deletes that copy.`
+    ? `Reminders go to ${email}, at most once a day, and mention each food only once. They use the food in your account, from all your devices.`
     : "Get an email when food in your fridge is about to expire. Only food with an expiration date is included.";
 }
 

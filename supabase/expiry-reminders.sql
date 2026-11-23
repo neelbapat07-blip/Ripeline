@@ -3,6 +3,9 @@
 --  Paste this whole file into Supabase → SQL Editor → New query → Run.
 --  It's safe to run again (for example after changing the sender email).
 --
+--  Run supabase/account-sync.sql FIRST (reminders read the food from the
+--  account's synced list in the "user_data" table).
+--
 --  BEFORE running it, store your Brevo API key in Supabase's Vault (once):
 --    select vault.create_secret('PASTE-YOUR-BREVO-API-KEY-HERE', 'brevo_api_key');
 -- =====================================================================
@@ -11,8 +14,8 @@
 create extension if not exists pg_net with schema extensions;
 create extension if not exists pg_cron;
 
--- 2. The table: one row per person who turned reminders on.
---    Holds only food names and expiration dates, plus their reminder choice.
+-- 2. The table: one row per person who turned reminders on (their reminder choice).
+--    (The "items" column is from an older version; the food now comes from user_data.)
 create table if not exists public.expiry_reminders (
   user_id     uuid primary key references auth.users (id) on delete cascade,
   name        text not null default '',
@@ -68,9 +71,11 @@ begin
   end if;
 
   for person in
-    select r.user_id, r.name, r.days_before, r.items, r.notified, u.email
+    select r.user_id, coalesce(d.profile->>'name', r.name) as name, r.days_before,
+           coalesce(d.items, r.items) as items, r.notified, u.email
     from public.expiry_reminders r
     join auth.users u on u.id = r.user_id
+    left join public.user_data d on d.user_id = r.user_id
     where r.enabled and u.email is not null and u.email_confirmed_at is not null
   loop
     -- Food expiring between today and "days_before" days from now, not emailed about yet
