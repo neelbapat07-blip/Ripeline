@@ -83,6 +83,9 @@ Ripeline works without an account. People who want one can tap
   (Authentication → Emails → Templates → *Confirm signup*), and it's sent through the Gmail
   account set up under Authentication → Emails → SMTP Settings.
 - **Log in, log out, forgot password** and **delete my account** are on the account screen.
+- **Logging out keeps your name and email on the device**, and the Log In form comes back
+  already filled in with your email. The app never stores passwords; your phone's password
+  manager can save it. To erase everything, use Privacy Settings → Delete all my data.
 - **Only name and email** go to Supabase. Food, shopping list and preferences still stay
   in the browser on each device.
 

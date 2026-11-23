@@ -93,7 +93,7 @@
           <p>Accounts are optional. If you create one, your name and email are stored with Supabase, the service that runs Ripeline accounts, so you can log in and receive account emails (like the welcome email). You can delete your account any time from the account screen.</p>
           <button class="small-button small-button--danger" type="button" id="delete-data">Delete all my data</button>
         </div>
-        <button class="settings-row" type="button" id="log-out">
+        <button class="settings-row" type="button" id="log-out" hidden>
           Log Out
           <svg class="settings-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4"/></svg>
         </button>
@@ -287,15 +287,15 @@
         <form class="form-card account-form" id="account-form" novalidate>
           <div class="field" id="account-name-field">
             <label class="field__label" for="account-name">Name <span class="field__optional">(optional)</span></label>
-            <input class="field__input" id="account-name" type="text" maxlength="40" autocomplete="given-name" placeholder="e.g. Neel">
+            <input class="field__input" id="account-name" name="name" type="text" maxlength="40" autocomplete="given-name" placeholder="e.g. Neel">
           </div>
           <div class="field" id="account-email-field">
             <label class="field__label" for="account-email-input">Email</label>
-            <input class="field__input" id="account-email-input" type="email" maxlength="80" autocomplete="email" placeholder="you@example.com">
+            <input class="field__input" id="account-email-input" name="email" type="email" maxlength="80" autocomplete="username" placeholder="you@example.com">
           </div>
           <div class="field" id="account-password-field">
             <label class="field__label" for="account-password">Password</label>
-            <input class="field__input" id="account-password" type="password" maxlength="72" autocomplete="new-password">
+            <input class="field__input" id="account-password" name="password" type="password" maxlength="72" autocomplete="new-password">
             <p class="field__hint" id="account-password-hint">At least 8 characters.</p>
             <label class="account-show"><input type="checkbox" id="account-show-password"> Show password</label>
           </div>

@@ -477,12 +477,11 @@ document.getElementById("delete-data").addEventListener("click", () => {
   location.reload();
 });
 
-/* Log out: sign out of the account (if any) and forget your name and email on this device.
-   Food and shopping list stay. */
+/* Log out of your account. Your name, email, food and shopping list stay on this device,
+   so logging back in is quick. (To erase everything, use Privacy Settings → Delete all my data.) */
 document.getElementById("log-out").addEventListener("click", async () => {
-  if (!confirm("Log out? This removes your name and email from this device. Your food and shopping list stay.")) return;
+  if (!confirm("Log out of your account? Your name, email, food and shopping list stay on this device.")) return;
   if (typeof signOutOfAccount === "function") await signOutOfAccount();
-  profile = { ...DEFAULT_PROFILE, theme: profile.theme };
   saveProfile();
   profileForm.hidden = true;
   renderProfile();

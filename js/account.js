@@ -28,7 +28,9 @@ const authClient = (() => {
 })();
 
 let currentUser = null;          // the signed-in account, or null
-let accountMode = "signup";      // which form the account screen shows: signup, login, reset, newPassword
+// Which form the account screen shows: signup, login, reset, newPassword.
+// If someone has used an account on this device before, start on Log In.
+let accountMode = prefs.lastAccountEmail ? "login" : "signup";
 
 /* A link from one of our emails (confirm, reset password) comes back with details after the "#".
    Remember it now, before Supabase reads it and tidies the address. */
@@ -76,9 +78,35 @@ function setAccountBusy(busy, label) {
   if (label) button.textContent = label;
 }
 
+/* ---------- Remembering the account email on this device ---------- */
+function rememberAccountEmail(email) {
+  if (!email || prefs.lastAccountEmail === email) return;
+  prefs.lastAccountEmail = email;
+  savePrefs();
+}
+
+/* Fill the email box with the remembered email (if it's empty), so logging back in is quick */
+function prefillAccountEmail() {
+  const input = document.getElementById("account-email-input");
+  if (!input.value && (accountMode === "login" || accountMode === "reset")) {
+    input.value = prefs.lastAccountEmail || profile.email || "";
+  }
+}
+
+/* Ask the browser's password manager to offer saving the login (Chrome/Android support this;
+   iPhone and other browsers offer it on their own). The app itself never stores passwords. */
+function offerToSavePassword(email, password) {
+  try {
+    if (window.PasswordCredential && navigator.credentials) {
+      navigator.credentials.store(new window.PasswordCredential({ id: email, password, name: profile.name || email })).catch(() => {});
+    }
+  } catch (error) { /* not supported: the browser handles it itself */ }
+}
+
 /* ---------- Keeping the local profile in step with the account ---------- */
 function applyAccountToProfile(user) {
   if (!user) return;
+  rememberAccountEmail(user.email);
   const accountName = cleanText(user.user_metadata && user.user_metadata.name, 40);
   profile.email = user.email || profile.email;
   if (accountName) profile.name = accountName;
@@ -125,6 +153,7 @@ function renderAccountScreen(mode) {
   document.getElementById("account-password-hint").hidden = accountMode === "login";
   document.getElementById("account-forgot").hidden = accountMode !== "login";
   document.getElementById("account-back-to-login").hidden = accountMode !== "reset";
+  prefillAccountEmail();
 }
 
 /* Small "Account" row on the Profile screen */
@@ -135,6 +164,7 @@ function renderAccountRow() {
   const emailInput = document.getElementById("profile-email-input");
   emailInput.readOnly = Boolean(currentUser);
   document.getElementById("profile-email-note").hidden = !currentUser;
+  document.getElementById("log-out").hidden = !currentUser;   // nothing to log out of without an account
 }
 
 document.getElementById("account-tabs").addEventListener("click", (event) => {
@@ -184,12 +214,16 @@ document.getElementById("account-form").addEventListener("submit", async (event)
       });
       if (error) throw error;
       if (name) { profile.name = name; saveProfile(); }
+      rememberAccountEmail(email);
+      offerToSavePassword(email, password);
       document.getElementById("account-form").reset();
       accountMessage(`Almost done! We sent a welcome email to ${email}. Tap “Confirm my email” in it to finish creating your account. (Check your spam folder if you don't see it.)`, "success");
     } else if (accountMode === "login") {
       const { error } = await authClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      document.getElementById("account-form").reset();
+      rememberAccountEmail(email);
+      offerToSavePassword(email, password);
+      document.getElementById("account-password").value = "";
       showToast("You're logged in");
       location.hash = "#profile";
     } else if (accountMode === "reset") {
@@ -199,8 +233,9 @@ document.getElementById("account-form").addEventListener("submit", async (event)
     } else if (accountMode === "newPassword") {
       const { error } = await authClient.auth.updateUser({ password });
       if (error) throw error;
+      if (currentUser) offerToSavePassword(currentUser.email, password);
       document.getElementById("account-form").reset();
-      accountMode = "signup";
+      accountMode = "login";
       showToast("Your password has been changed");
       location.hash = "#profile";
     }
@@ -227,11 +262,12 @@ document.getElementById("account-resend").addEventListener("click", async () => 
 async function signOutOfAccount() {
   if (authClient && currentUser) await authClient.auth.signOut().catch(() => {});
   currentUser = null;
+  accountMode = "login";
+  renderAccountRow();
 }
 document.getElementById("account-log-out").addEventListener("click", async () => {
   await signOutOfAccount();
-  profile = { ...DEFAULT_PROFILE, theme: profile.theme };
-  saveProfile();
+  accountMode = "login";            // next time, show Log In with the email already filled in
   showToast("You're logged out");
   location.hash = "#profile";
 });
@@ -247,6 +283,9 @@ document.getElementById("account-delete").addEventListener("click", async () => 
   }
   await authClient.auth.signOut({ scope: "local" }).catch(() => {});
   currentUser = null;
+  accountMode = "signup";
+  delete prefs.lastAccountEmail;      // the account is gone, so don't suggest its email any more
+  savePrefs();
   profile = { ...DEFAULT_PROFILE, theme: profile.theme };
   saveProfile();
   showToast("Your account has been deleted");
