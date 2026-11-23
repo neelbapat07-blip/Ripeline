@@ -80,6 +80,32 @@
         </div>
       </div>
 
+      <h2 class="profile-heading">Notifications</h2>
+      <div class="white-card" id="reminders-card">
+        <label class="switch-row" for="reminders-enabled">
+          <span>
+            <span class="switch-row__title">Expiry reminder emails</span>
+            <span class="switch-row__hint">An email before your food expires</span>
+          </span>
+          <input class="switch" type="checkbox" id="reminders-enabled" role="switch">
+        </label>
+        <div class="reminders-options" id="reminders-options" hidden>
+          <label class="panel__label" for="reminders-days">Remind me</label>
+          <span class="field__select">
+            <select class="field__input" id="reminders-days">
+              <option value="0">On the day it expires</option>
+              <option value="1">1 day before</option>
+              <option value="2">2 days before</option>
+              <option value="3">3 days before</option>
+              <option value="5">5 days before</option>
+              <option value="7">7 days before</option>
+            </select>
+          </span>
+        </div>
+        <p class="white-card__note" id="reminders-note"></p>
+        <p class="account-message" id="reminders-status" role="status" hidden></p>
+      </div>
+
       <h2 class="profile-heading">Account Settings</h2>
       <div class="white-card white-card--list">
         <a class="settings-row" href="#account">
@@ -91,7 +117,8 @@
           <svg class="settings-row__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
         <div class="privacy-panel" id="privacy-panel" hidden>
-          <p>Your food, shopping list and preferences are stored only in this browser on this device, separately for each account, and are never uploaded.</p>
+          <p>Your food, shopping list and preferences are stored only in this browser on this device, separately for each account.</p>
+          <p>If you turn on <b>expiry reminder emails</b>, Ripeline also keeps a copy of your food names and expiration dates with Supabase so it can email you. Turning reminders off deletes that copy.</p>
           <p>To use Ripeline you need a free account. Your name and email are stored with Supabase, the service that runs Ripeline accounts, so you can log in and receive account emails (like the welcome email). You can delete your account any time from the account screen.</p>
           <button class="small-button small-button--danger" type="button" id="delete-data">Delete my data from this device</button>
         </div>
@@ -374,5 +401,6 @@
   <script src="js/recipes-more.js"></script>
   <script src="js/app.js"></script>
   <script src="js/account.js"></script>
+  <script src="js/reminders.js"></script>
 </body>
 </html>

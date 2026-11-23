@@ -48,7 +48,11 @@ function loadAllData() {
 }
 loadAllData();
 
-const saveItems = () => FridgeStorage.save(STORAGE_KEYS.items, items);
+const saveItems = () => {
+  const ok = FridgeStorage.save(STORAGE_KEYS.items, items);
+  if (typeof scheduleReminderSync === "function") scheduleReminderSync();   // keep reminder emails up to date
+  return ok;
+};
 const saveProfile = () => FridgeStorage.save(STORAGE_KEYS.profile, profile);
 const savePrefs = () => FridgeStorage.save(STORAGE_KEYS.prefs, prefs);
 const saveShopping = () => { const ok = FridgeStorage.save(STORAGE_KEYS.shopping, shoppingList); updateShoppingBadge(); return ok; };
@@ -174,10 +178,21 @@ function foodPicture(item, extraClass) {
   return `<div class="photo photo--emoji ${extraClass}" role="img" aria-label="${esc(item.name)}">${emoji}</div>`;
 }
 
-/* A recipe's picture: its emoji on its own coloured tile */
+/* A recipe's picture: its main emoji on a soft glow in the recipe's colour,
+   with a few of its ingredients scattered around it */
 function recipePicture(recipe, className) {
   const image = recipe.image || {};
-  return `<div class="${className} recipe-emoji" style="background:${esc(image.color || "#ffffff")}" role="img" aria-label="${esc(recipe.name)}">${image.emoji || "🍽️"}</div>`;
+  const main = image.emoji || "🍽️";
+  const color = /^#[0-9a-f]{6}$/i.test(image.color || "") ? image.color : "#ffe9c7";
+  const extras = [];
+  recipe.ingredients.forEach((ingredient) => {
+    const food = findCatalogFood(ingredient.name);
+    if (food && food.emoji !== main && !extras.includes(food.emoji) && extras.length < 3) extras.push(food.emoji);
+  });
+  const sides = extras.map((emoji, i) => `<span class="recipe-art__side recipe-art__side--${i + 1}" aria-hidden="true">${emoji}</span>`).join("");
+  return `<div class="${className} recipe-art" style="--art-color:${color}" role="img" aria-label="${esc(recipe.name)}">
+    ${sides}<span class="recipe-art__main" aria-hidden="true">${main}</span>
+  </div>`;
 }
 
 function totalMinutes(recipe) {
@@ -429,6 +444,7 @@ function renderProfile() {
     name ? name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase() : "?";
 
   if (typeof renderAccountRow === "function") renderAccountRow();
+  if (typeof renderReminders === "function") renderReminders();
 
   document.querySelectorAll("[data-theme-choice]").forEach((tile) => {
     const selected = tile.dataset.themeChoice === profile.theme;
@@ -484,6 +500,7 @@ document.getElementById("privacy-toggle").addEventListener("click", (event) => {
 });
 document.getElementById("delete-data").addEventListener("click", async () => {
   if (!confirm("Delete all your Ripeline data on this device? This removes your food, shopping list, profile, preferences and any backups, and logs you out. It can't be undone. (Your account itself stays; delete it from the account screen.)")) return;
+  if (typeof stopReminders === "function") await stopReminders();   // also removes the reminder copy
   if (!FridgeStorage.deleteAccountData()) {
     showToast("Couldn't delete the data. Try clearing this site's data in your browser settings.");
     return;

@@ -57,7 +57,7 @@ function friendlyAuthError(error) {
   }
   if (code === "invalid_credentials") return "That email and password don't match. Check them and try again.";
   if (code === "email_not_confirmed") return "Please confirm your email first. Check your inbox for the welcome email (and your spam folder).";
-  if (code === "user_already_exists" || code === "email_exists") return "There's already an account with that email. Try logging in instead.";
+  if (code === "user_already_exists" || code === "email_exists") return "An account has already been created with this email. Please log in instead (or use “Forgot your password?”).";
   if (code === "weak_password") return `Please choose a stronger password (at least ${ACCOUNT_MIN_PASSWORD} characters, not easy to guess).`;
   if (code === "email_address_invalid") return "That email address doesn't look right.";
   if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit" || /rate limit/i.test(message)) return "Too many attempts right now. Please wait a few minutes and try again.";
@@ -211,10 +211,15 @@ document.getElementById("account-form").addEventListener("submit", async (event)
   accountMessage("");
   try {
     if (accountMode === "signup") {
-      const { error } = await authClient.auth.signUp({
+      const { data, error } = await authClient.auth.signUp({
         email, password, options: { data: { name }, emailRedirectTo: returnAddress() },
       });
       if (error) throw error;
+      // Supabase doesn't report "email already used" as an error (for privacy). Instead it returns
+      // an account with no sign-in methods attached, which means the email is already taken.
+      if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        throw { code: "user_already_exists" };
+      }
       if (name) { profile.name = name; saveProfile(); }
       rememberAccountEmail(email);
       offerToSavePassword(email, password);
@@ -309,6 +314,7 @@ function unlockApp(user) {
     updateShoppingBadge();
     showStorageStatus(FridgeStorage.status());
     // Go to Home, unless the address already names a real screen (e.g. a bookmarked #recipes)
+    if (typeof loadRemindersForAccount === "function") loadRemindersForAccount();
     const { name } = readAddress();
     const isScreen = name && document.getElementById(SCREEN_ALIASES[name] || name) && document.getElementById(SCREEN_ALIASES[name] || name).classList.contains("screen");
     const emptyAddress = !location.hash.replace("#", "");

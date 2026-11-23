@@ -13,7 +13,8 @@ in that one browser, on that one device:
 
 - **Each browser and device has its own separate data.** Your phone, your laptop, and a
   friend's phone each have their own fridge. Nothing is shared or synced.
-- **Your food data is never sent to a server.** (If you create an account, only your name and email are stored with Supabase.)
+- **Your food data stays on the device.** Supabase stores your name and email for your account, and, only
+  if you turn on expiry reminder emails, your food names and expiration dates.
 - **It saves automatically** every time you add, edit or delete food, change the shopping
   list, or change your profile, theme, sort order or recipe filter.
 - **It loads automatically** when you open the app, and survives refreshing and closing the browser.
@@ -112,6 +113,33 @@ grant execute on function public.delete_user() to authenticated;
 
 It only lets a logged-in person delete **their own** account.
 
+## Expiry reminder emails
+
+On **Profile → Notifications**, people can turn on **Expiry reminder emails** and choose when to be
+reminded (on the day, or 1, 2, 3, 5 or 7 days before). It's **off** until they turn it on.
+
+While it's on, the app keeps a copy of **only their food names and expiration dates** in Supabase
+(table `expiry_reminders`, which only they can read). Once a day (13:00 UTC = 8 AM US Eastern),
+Supabase emails them, through Brevo, about food that's about to expire. Each food is mentioned only
+once. Turning reminders off, "Delete my data from this device", or deleting the account removes the copy.
+
+### One-time setup (in the Supabase and Brevo dashboards)
+1. **Brevo API key:** Brevo → **SMTP & API** → **API Keys** tab → **Generate a new API key**
+   (name it `Supabase reminders`) and copy it. It starts with `xkeysib-`. This is different from the SMTP key.
+2. **Store it safely in Supabase:** Supabase → **SQL Editor → New query**, paste the line below with
+   your key in place of the placeholder, and click **Run** (only once):
+   ```sql
+   select vault.create_secret('PASTE-YOUR-BREVO-API-KEY-HERE', 'brevo_api_key');
+   ```
+3. **Create the reminder system:** open [`supabase/expiry-reminders.sql`](supabase/expiry-reminders.sql),
+   copy all of it, paste it into a new SQL Editor query, and click **Run**. It's safe to run again.
+   - The "from" address is set to `neelbapat07@gmail.com` near the top of the function. It must be a
+     **verified sender in Brevo**; change it there if you use a different one.
+   - If it complains about `pg_net` or `pg_cron`, turn them on under **Database → Extensions**
+     (or **Integrations → Cron**), then run it again.
+4. **Test it now (optional):** in the SQL Editor run `select public.send_expiry_reminders();`.
+   It returns how many reminder emails it just sent.
+
 ## How recipe matching works
 
 For each recipe, Ripeline checks every required ingredient against My Fridge
@@ -135,6 +163,8 @@ Salt, pepper, cooking oil and water are assumed to be in every kitchen.
 |---|---|
 | `index.html` | The **content**: all the screens, their text, pictures and buttons |
 | `css/styles.css` | The **looks**: colours, sizes, spacing. The colours at the top come from Figma |
+| `js/reminders.js` | **Expiry reminder emails** setting (Profile → Notifications) |
+| `supabase/expiry-reminders.sql` | One-time Supabase setup for reminder emails (table, daily check, timer) |
 | `js/account.js` | **Optional accounts**: sign up, log in, password reset, delete account |
 | `js/config.js` | The public Supabase address and publishable key |
 | `js/vendor/supabase.js` | Supabase's official library (v2.118.0), packed into one file |

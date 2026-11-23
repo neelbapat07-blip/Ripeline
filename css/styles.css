@@ -1056,3 +1056,80 @@ body.is-locked .tab-bar,
 body.is-locked .profile-button,
 body.is-locked .account-back { display: none !important; }
 body.is-locked .screen { padding-bottom: 40px; }
+
+/* ---------- Recipe pictures: emoji "illustrations" ---------- */
+.recipe-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.55) 28%, transparent 62%),
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.5) 0 8%, transparent 9%),
+    radial-gradient(circle at 85% 80%, rgba(255, 255, 255, 0.35) 0 10%, transparent 11%),
+    var(--art-color, #ffe9c7);
+  box-shadow: inset 0 -18px 30px rgba(0, 0, 0, 0.06);
+}
+.recipe-art__main {
+  position: relative;
+  z-index: 1;
+  font-size: 84px;
+  line-height: 1;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.2));
+}
+.recipe-art__side {
+  position: absolute;
+  font-size: 30px;
+  line-height: 1;
+  opacity: 0.9;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.15));
+}
+.recipe-art__side--1 { left: 13%; top: 16%; transform: rotate(-14deg); }
+.recipe-art__side--2 { right: 13%; bottom: 14%; transform: rotate(12deg); }
+.recipe-art__side--3 { right: 16%; top: 14%; transform: rotate(8deg); font-size: 24px; }
+/* Recipe card (list) */
+.recipe-card__photo.recipe-art { aspect-ratio: 337 / 160; font-size: inherit; }
+/* Big picture on Recipe Details */
+.recipe-hero.recipe-art .recipe-art__main { font-size: 110px; }
+.recipe-hero.recipe-art .recipe-art__side { font-size: 38px; }
+/* Small picture on Home's "Recipe Pick for You" */
+.pick-card__picture.recipe-art .recipe-art__main { font-size: 52px; }
+.pick-card__picture.recipe-art .recipe-art__side { font-size: 18px; }
+.pick-card__picture.recipe-art .recipe-art__side--3 { display: none; }
+
+/* ---------- Notifications: on/off switch ---------- */
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.switch-row__title { display: block; font-size: 18px; line-height: 22px; }
+.switch-row__hint { display: block; margin-top: 2px; font-size: 13px; color: #555; }
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 30px;
+  margin: 0;
+  border-radius: 15px;
+  background: #cfcfcf;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+.switch:checked { background: var(--button); }
+.switch:checked::after { transform: translateX(22px); }
+.switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.reminders-options { margin-top: 14px; }
+.reminders-options .field__input { margin-top: 6px; background: #f3f3f3; }
+#reminders-card .white-card__note { margin-top: 12px; }
