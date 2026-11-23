@@ -532,7 +532,6 @@ function applyPrefsToViews() {
 /* Log out of your account. Your name, email, food and shopping list stay on this device,
    so logging back in is quick. (To erase everything, use Privacy Settings → Delete all my data.) */
 document.getElementById("log-out").addEventListener("click", async () => {
-  if (!confirm("Log out of your account? Your name, email, food and shopping list stay on this device.")) return;
   if (typeof signOutOfAccount === "function") await signOutOfAccount();
   saveProfile();
   profileForm.hidden = true;

@@ -266,9 +266,20 @@ document.getElementById("account-resend").addEventListener("click", async () => 
 });
 
 /* Log out (from the account screen or the Profile screen's Log Out row) */
+/* Waits for a task, but never longer than `ms` (a slow phone connection must not stop logging out) */
+function withTimeLimit(task, ms) {
+  return Promise.race([Promise.resolve(task).catch(() => {}), new Promise((done) => setTimeout(done, ms))]);
+}
 async function signOutOfAccount() {
-  if (typeof stopAccountSync === "function") await stopAccountSync();      // send any last changes first
-  if (authClient && currentUser) await authClient.auth.signOut().catch(() => {});
+  // send any last changes first (at most 3 seconds)
+  if (typeof stopAccountSync === "function") await withTimeLimit(stopAccountSync(), 3000);
+  // "local" logs out on this device straight away, without needing the internet,
+  // so the phone can't stay logged in because the server couldn't be reached
+  if (authClient) await withTimeLimit(authClient.auth.signOut({ scope: "local" }), 3000);
+  try {   // make sure no saved login is left behind on this device
+    Object.keys(window.localStorage).filter((key) => /^sb-.*-auth-token/.test(key))
+      .forEach((key) => window.localStorage.removeItem(key));
+  } catch (error) { /* storage blocked: nothing saved anyway */ }
   accountMode = "login";            // next time, show Log In with the email already filled in
   lockApp();
 }
