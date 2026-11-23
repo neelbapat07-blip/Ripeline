@@ -1,14 +1,16 @@
 /*
-  Ripeline accounts (optional)
-  ----------------------------
-  People can use Ripeline without an account. Creating one:
+  Ripeline accounts
+  -----------------
+  Everyone needs a free account to use Ripeline. Until someone logs in (with a
+  confirmed email), only the Sign Up / Log In screen is shown.
+  Creating an account:
     - stores their name and email with Supabase (the account service),
     - sends them a welcome email with a "confirm my email" button
       (the email itself is set up in the Supabase dashboard, not in this file),
     - lets them log in again later.
 
   Food, shopping list and preferences are NOT uploaded: they stay in this
-  browser exactly like before (see js/storage.js).
+  browser, separately for each account (see js/storage.js).
 
   Screens: the "Your Account" screen (#account) handles sign up, log in,
   forgotten passwords and deleting the account.
@@ -30,7 +32,7 @@ const authClient = (() => {
 let currentUser = null;          // the signed-in account, or null
 // Which form the account screen shows: signup, login, reset, newPassword.
 // If someone has used an account on this device before, start on Log In.
-let accountMode = prefs.lastAccountEmail ? "login" : "signup";
+let accountMode = FridgeStorage.loadDevice().lastAccountEmail ? "login" : "signup";
 
 /* A link from one of our emails (confirm, reset password) comes back with details after the "#".
    Remember it now, before Supabase reads it and tidies the address. */
@@ -80,16 +82,16 @@ function setAccountBusy(busy, label) {
 
 /* ---------- Remembering the account email on this device ---------- */
 function rememberAccountEmail(email) {
-  if (!email || prefs.lastAccountEmail === email) return;
-  prefs.lastAccountEmail = email;
-  savePrefs();
+  const device = FridgeStorage.loadDevice();
+  if (!email || device.lastAccountEmail === email) return;
+  FridgeStorage.saveDevice({ ...device, lastAccountEmail: email });
 }
 
 /* Fill the email box with the remembered email (if it's empty), so logging back in is quick */
 function prefillAccountEmail() {
   const input = document.getElementById("account-email-input");
   if (!input.value && (accountMode === "login" || accountMode === "reset")) {
-    input.value = prefs.lastAccountEmail || profile.email || "";
+    input.value = FridgeStorage.loadDevice().lastAccountEmail || "";
   }
 }
 
@@ -115,7 +117,7 @@ function applyAccountToProfile(user) {
 
 /* ---------- The "Your Account" screen ---------- */
 const ACCOUNT_MODES = {
-  signup:      { title: "Create Account", subtitle: "Free, optional, and takes a minute", button: "Create Account" },
+  signup:      { title: "Create Account", subtitle: "Create a free account to start using Ripeline", button: "Create Account" },
   login:       { title: "Log In", subtitle: "Welcome back!", button: "Log In" },
   reset:       { title: "Reset Password", subtitle: "We'll email you a link to choose a new one", button: "Send Reset Link" },
   newPassword: { title: "New Password", subtitle: "Choose a new password for your account", button: "Save New Password" },
@@ -225,7 +227,7 @@ document.getElementById("account-form").addEventListener("submit", async (event)
       offerToSavePassword(email, password);
       document.getElementById("account-password").value = "";
       showToast("You're logged in");
-      location.hash = "#profile";
+      location.hash = "#home";
     } else if (accountMode === "reset") {
       const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo: returnAddress() });
       if (error) throw error;
@@ -237,7 +239,7 @@ document.getElementById("account-form").addEventListener("submit", async (event)
       document.getElementById("account-form").reset();
       accountMode = "login";
       showToast("Your password has been changed");
-      location.hash = "#profile";
+      location.hash = "#home";
     }
   } catch (error) {
     accountMessage(friendlyAuthError(error), "error");
@@ -261,72 +263,115 @@ document.getElementById("account-resend").addEventListener("click", async () => 
 /* Log out (from the account screen or the Profile screen's Log Out row) */
 async function signOutOfAccount() {
   if (authClient && currentUser) await authClient.auth.signOut().catch(() => {});
-  currentUser = null;
-  accountMode = "login";
-  renderAccountRow();
+  accountMode = "login";            // next time, show Log In with the email already filled in
+  lockApp();
 }
 document.getElementById("account-log-out").addEventListener("click", async () => {
   await signOutOfAccount();
-  accountMode = "login";            // next time, show Log In with the email already filled in
   showToast("You're logged out");
-  location.hash = "#profile";
 });
 
 /* Delete account: needs the small "delete_user" setup in Supabase (see README) */
 document.getElementById("account-delete").addEventListener("click", async () => {
   if (!authClient || !currentUser) return;
-  if (!confirm("Delete your Ripeline account? Your name and email will be removed from our account service. Food saved on this device stays unless you also use “Delete all my data”.")) return;
+  if (!confirm("Delete your Ripeline account? Your name and email will be removed from our account service, and your food, shopping list and settings will be erased from this device. This can't be undone.")) return;
   const { error } = await authClient.rpc("delete_user");
   if (error) {
     accountMessage("Sorry, your account couldn't be deleted right now. Please try again later.", "error");
     return;
   }
+  FridgeStorage.deleteAccountData();
+  const device = FridgeStorage.loadDevice();
+  delete device.lastAccountEmail;     // the account is gone, so don't suggest its email any more
+  FridgeStorage.saveDevice(device);
   await authClient.auth.signOut({ scope: "local" }).catch(() => {});
-  currentUser = null;
   accountMode = "signup";
-  delete prefs.lastAccountEmail;      // the account is gone, so don't suggest its email any more
-  savePrefs();
-  profile = { ...DEFAULT_PROFILE, theme: profile.theme };
-  saveProfile();
+  lockApp();
   showToast("Your account has been deleted");
-  location.hash = "#profile";
 });
+
+/* ---------- Locking and unlocking Ripeline ---------- */
+let welcomeShown = false;
+let linkErrorShown = false;
+
+/* Someone is logged in: load THEIR data and open the app */
+function unlockApp(user) {
+  const sameAccount = appUnlocked && FridgeStorage.currentAccount() === String(user.id).replace(/[^a-zA-Z0-9-]/g, "");
+  currentUser = user;
+  if (!sameAccount) {
+    FridgeStorage.useAccount(user.id);
+    loadAllData();
+    applyPrefsToViews();
+    appUnlocked = true;
+    applyAccountToProfile(user);
+    document.body.classList.remove("is-locked", "is-checking");
+    applyTheme();
+    updateShoppingBadge();
+    showStorageStatus(FridgeStorage.status());
+    // Go to Home, unless the address already names a real screen (e.g. a bookmarked #recipes)
+    const { name } = readAddress();
+    const isScreen = name && document.getElementById(SCREEN_ALIASES[name] || name) && document.getElementById(SCREEN_ALIASES[name] || name).classList.contains("screen");
+    const emptyAddress = !location.hash.replace("#", "");
+    if (emptyAddress || !isScreen || name === "account") history.replaceState(null, "", "#home");
+    showScreen();
+  } else {
+    applyAccountToProfile(user);
+  }
+  renderAccountRow();
+}
+
+/* Nobody is logged in: hide everything except Sign Up / Log In */
+function lockApp() {
+  currentUser = null;
+  appUnlocked = false;
+  FridgeStorage.stopUsingAccount();
+  loadAllData();                      // nobody logged in = empty, so no one's food is on screen
+  document.body.classList.add("is-locked");
+  document.body.classList.remove("is-checking");
+  applyTheme();
+  updateShoppingBadge();
+  showStorageStatus(FridgeStorage.status());
+  if (returnedFromEmail && returnedFromEmail.error && !linkErrorShown) {
+    linkErrorShown = true;
+    accountMode = "login";
+    history.replaceState(null, "", "#account");
+    showScreen();
+    accountMessage(returnedFromEmail.error === "otp_expired"
+      ? "That email link has expired or was already used. Log in, or create your account again to get a new email."
+      : "That email link didn't work. Please try again.", "error");
+    return;
+  }
+  history.replaceState(null, "", "#account");
+  showScreen();
+  renderAccountRow();
+}
 
 /* ---------- Reacting to logins, logouts and email links ---------- */
 if (authClient) {
   authClient.auth.onAuthStateChange((event, session) => {
-    currentUser = session ? session.user : null;
-    if (event === "SIGNED_IN" || event === "USER_UPDATED") applyAccountToProfile(currentUser);
-    if (event === "PASSWORD_RECOVERY") {
+    if (event === "PASSWORD_RECOVERY" && session) {
+      unlockApp(session.user);
       accountMode = "newPassword";
       history.replaceState(null, "", "#account");
       showScreen();
+      return;
     }
-    renderAccountRow();
+    if (session) {
+      unlockApp(session.user);
+      // Just came back from the confirm button in the welcome email?
+      if (returnedFromEmail && returnedFromEmail.type === "signup" && !welcomeShown) {
+        welcomeShown = true;
+        showToast("Your email is confirmed. Welcome to Ripeline! 🎉");
+      }
+    } else {
+      lockApp();
+    }
     if (document.getElementById("profile").classList.contains("is-active")) renderProfile();
     if (document.getElementById("account").classList.contains("is-active")) renderAccountScreen();
   });
-
-  // Just came back from the confirm link in the welcome email?
-  authClient.auth.getSession().then(({ data }) => {
-    currentUser = data.session ? data.session.user : null;
-    if (returnedFromEmail && returnedFromEmail.type === "signup" && currentUser) {
-      history.replaceState(null, "", "#profile");
-      showScreen();
-      showToast("Your email is confirmed. Welcome to Ripeline! 🎉");
-    }
-    renderAccountRow();
-  });
-}
-
-if (returnedFromEmail && returnedFromEmail.error) {
-  history.replaceState(null, "", "#account");
-  accountMode = "login";
-  showScreen();
-  accountMessage(returnedFromEmail.error === "otp_expired"
-    ? "That email link has expired or was already used. Log in, or create your account again to get a new email."
-    : "That email link didn't work. Please try again.", "error");
+} else {
+  // The account library couldn't load (e.g. offline on the very first visit)
+  lockApp();
 }
 
 renderAccountRow();
-if (readAddress().name === "account") renderAccountScreen();

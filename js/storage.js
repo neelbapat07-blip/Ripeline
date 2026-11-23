@@ -11,6 +11,12 @@
     - It stays after refreshing or closing the browser, until you delete it
       (Profile → Privacy Settings → Delete all my data, or by clearing site data).
 
+  EACH ACCOUNT HAS ITS OWN DATA
+  You need an account to use Ripeline. Each account's data is saved separately
+  on the device (the key name ends with the account's id), so two people who
+  share a laptop never see each other's fridge. The very first account to log
+  in on a device takes over any data saved there before accounts existed.
+
   WHAT IS SAVED (each under its own name, called a "key")
     fridgeiq.items.v1     your food: names, categories, storage, quantities, expiration dates
     fridgeiq.shopping.v1  your shopping list
@@ -33,11 +39,15 @@ const STORAGE_KEYS = {
   prefs:    "fridgeiq.prefs.v1",
 };
 
+/* Device-wide settings that are needed before anyone logs in (last account email, colour theme) */
+const DEVICE_KEY = "fridgeiq.device.v1";
+
 /* Data left behind by older versions of Ripeline (AI recipes and an API key) */
 const RETIRED_KEYS = ["fridgeiq.claudeKey.v1", "fridgeiq.recipes.v1", "fridgeiq.steps.v1"];
 
 const FridgeStorage = (() => {
   let available = false;
+  let accountId = "";            // whose data we're reading/writing ("" = nobody logged in)
   let saveProblem = null;        // null, "blocked" or "full"
   const readProblems = [];       // names of data that couldn't be read and were backed up
   const statusListeners = [];
@@ -63,7 +73,7 @@ const FridgeStorage = (() => {
   }
 
   /* Keeps a copy of data we couldn't read, so it is never silently lost */
-  function backUp(key, raw) {
+  function backUp(key, raw) {   // key is already the account's own key here
     try {
       window.localStorage.setItem(key + ".backup", raw);
     } catch (error) {
@@ -78,8 +88,41 @@ const FridgeStorage = (() => {
       clean     – a function that checks the data and returns { value, dropped }
       fallback  – what to use when nothing has been saved yet
   */
+  /* The real storage name for this account, e.g. "fridgeiq.items.v1.<account id>" */
+  function scoped(key) {
+    return accountId ? `${key}.${accountId}` : null;
+  }
+
+  /* Switch to an account's data. The first account on a device inherits data saved before accounts. */
+  function useAccount(id) {
+    accountId = String(id || "").replace(/[^a-zA-Z0-9-]/g, "");
+    readProblems.length = 0;
+    if (!available || !accountId) return;
+    try {
+      const claimed = window.localStorage.getItem("fridgeiq.legacy-owner.v1");
+      if (!claimed) {
+        Object.values(STORAGE_KEYS).forEach((key) => {
+          const old = window.localStorage.getItem(key);
+          if (old !== null && window.localStorage.getItem(`${key}.${accountId}`) === null) {
+            window.localStorage.setItem(`${key}.${accountId}`, old);
+          }
+          if (old !== null) window.localStorage.removeItem(key);
+        });
+        window.localStorage.setItem("fridgeiq.legacy-owner.v1", accountId);
+      }
+    } catch (error) {
+      /* storage full or blocked: the account simply starts with what it has */
+    }
+  }
+
+  function stopUsingAccount() {
+    accountId = "";
+  }
+
   function load(key, label, clean, fallback) {
-    if (!available) return fallback;
+    const realKey = scoped(key);
+    if (!available || !realKey) return fallback;
+    key = realKey;
     let raw;
     try {
       raw = window.localStorage.getItem(key);
@@ -112,6 +155,8 @@ const FridgeStorage = (() => {
 
   /* Saves one piece of data. Returns true if it worked. */
   function save(key, value) {
+    if (!scoped(key)) return false;           // nobody logged in: nothing to save
+    key = scoped(key);
     if (!available) {
       saveProblem = "blocked";
       notify();
@@ -128,16 +173,26 @@ const FridgeStorage = (() => {
     }
   }
 
-  /* Removes every piece of Ripeline data from this browser (including backups and the account login) */
-  function deleteEverything() {
+  /* Removes the logged-in account's data (food, shopping list, profile, preferences, backups)
+     from this device. Other accounts' data on the same device is left alone. */
+  function deleteAccountData() {
+    if (!accountId) return true;
     try {
       Object.keys(window.localStorage)
-        .filter((key) => key.startsWith("fridgeiq.") || key.startsWith("sb-"))   // sb- = account login on this device
+        .filter((key) => key.startsWith("fridgeiq.") && (key.endsWith(`.${accountId}`) || key.endsWith(`.${accountId}.backup`)))
         .forEach((key) => window.localStorage.removeItem(key));
       return true;
     } catch (error) {
       return false;
     }
+  }
+
+  /* Small device-wide settings (not tied to an account) */
+  function loadDevice() {
+    try { return JSON.parse(window.localStorage.getItem(DEVICE_KEY)) || {}; } catch (error) { return {}; }
+  }
+  function saveDevice(value) {
+    try { window.localStorage.setItem(DEVICE_KEY, JSON.stringify(value)); } catch (error) { /* not important */ }
   }
 
   function dismissReadProblems() {
@@ -153,7 +208,9 @@ const FridgeStorage = (() => {
   }
 
   return {
-    load, save, deleteEverything, status, dismissReadProblems, onOtherTabChange,
+    load, save, deleteAccountData, status, dismissReadProblems, onOtherTabChange,
+    useAccount, stopUsingAccount, loadDevice, saveDevice,
+    currentAccount: () => accountId,
     onStatusChange: (listener) => statusListeners.push(listener),
   };
 })();

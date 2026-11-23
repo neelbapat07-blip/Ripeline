@@ -1046,3 +1046,13 @@ a.settings-row { text-decoration: none; color: inherit; }
 .account-card__status { margin-top: 4px; font-size: 13px; color: #2d5a1e; }
 .account-card .green-button { margin-top: 16px; }
 #account > .text-button { margin-top: 20px; }
+
+/* ---------- Locked (not logged in) and loading states ---------- */
+.app-checking { display: none; padding: 120px 24px; font-size: 16px; text-align: center; color: #444; }
+body.is-checking .app-checking { display: block; }
+body.is-checking .screen, body.is-checking .tab-bar { display: none !important; }
+/* Until someone logs in: no bottom tabs, no profile button, no "back" link */
+body.is-locked .tab-bar,
+body.is-locked .profile-button,
+body.is-locked .account-back { display: none !important; }
+body.is-locked .screen { padding-bottom: 40px; }

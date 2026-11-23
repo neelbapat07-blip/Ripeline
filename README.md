@@ -3,8 +3,8 @@
 A phone-friendly website that helps you keep track of the food in your fridge
 and find recipes that use it before it goes bad.
 
-Ripeline runs in the browser, with no paid services. Your food, shopping list and
-preferences are saved in the browser on your device. Accounts are optional (see below).
+Ripeline runs in the browser, with no paid services. You need a free account to use it.
+Your food, shopping list and preferences are saved in the browser on your device (see below).
 
 ## Where your data is saved
 
@@ -34,7 +34,7 @@ in that one browser, on that one device:
 - *Saved data couldn't be read*: readable entries are kept and the original is copied to a
   `.backup` entry, so nothing is silently erased.
 
-To remove everything: **Profile → Privacy Settings → Delete all my data**. This only affects the
+To remove your data: **Profile → Privacy Settings → Delete my data from this device**. This only affects the
 current browser. Data stored by a different website address (for example the GitHub Pages link
 vs. the Vercel link) is separate, even on the same phone.
 
@@ -71,12 +71,12 @@ Download the project, **extract the ZIP** (right-click → Extract All), then do
 - **Shopping:** add items yourself or from recipes. Tap ✓ when you buy something and it
   moves into My Fridge with a suggested expiration date.
 - **Profile:** your name (used in the greeting), 4 colour schemes, privacy settings
-  (Delete all my data) and Log Out.
+  (Delete my data from this device) and Log Out.
 
-## Accounts and the welcome email (optional)
+## Accounts and the welcome email
 
-Ripeline works without an account. People who want one can tap
-**Profile → Create Account / Log In**. Accounts are run by **Supabase** (free plan):
+You need a free account to use Ripeline. Until someone logs in with a **confirmed email**,
+the app only shows the **Sign Up / Log In** screen. Accounts are run by **Supabase** (free plan):
 
 - **Sign up** stores the person's name and email with Supabase and sends a **welcome email**
   with a "Confirm my email" button. The email's wording is set in the Supabase dashboard
@@ -85,9 +85,10 @@ Ripeline works without an account. People who want one can tap
 - **Log in, log out, forgot password** and **delete my account** are on the account screen.
 - **Logging out keeps your name and email on the device**, and the Log In form comes back
   already filled in with your email. The app never stores passwords; your phone's password
-  manager can save it. To erase everything, use Privacy Settings → Delete all my data.
-- **Only name and email** go to Supabase. Food, shopping list and preferences still stay
-  in the browser on each device.
+  manager can save it. To erase your data from a device, use Privacy Settings → Delete my data from this device.
+- **Only name and email** go to Supabase. Food, shopping list and preferences stay in the
+  browser on each device, **separately for each account**, so people sharing a device never see
+  each other's fridge. The first account to log in on a device takes over any food saved there before.
 
 The public Supabase address and *publishable* key are in `js/config.js`. They are meant
 to be public. **Never** put the secret/service_role key or any password in the app.

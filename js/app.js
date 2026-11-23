@@ -4,9 +4,10 @@
   This file controls what happens when you TAP things, and builds the parts
   of each screen that change (lists, counts, tags).
 
-  Everything runs inside the browser, with no paid APIs. Food, shopping list and
-  preferences are saved in this browser on this device. Optional accounts
-  (sign up, log in, welcome email) are handled in js/account.js.
+  Everything runs inside the browser, with no paid APIs. You need a free account
+  to use Ripeline (sign up, log in and the welcome email are in js/account.js).
+  Each account's food, shopping list and preferences are saved in this browser
+  on this device, separately for each account.
 
   It is split into numbered parts:
     1. Saving & loading
@@ -32,7 +33,11 @@ const DEFAULT_PREFS = { fridgeSort: "expiration", fridgeCategory: "All", recipeF
 
 let items, shoppingList, profile, prefs;
 
-/* Reads everything from this browser's storage (on start, and when another tab changes it) */
+/* Ripeline stays locked (only the Sign Up / Log In screen) until someone logs in. js/account.js unlocks it. */
+let appUnlocked = false;
+
+/* Reads the logged-in account's data from this browser's storage
+   (after logging in, and when another tab changes it). Nobody logged in = empty. */
 function loadAllData() {
   items = FridgeStorage.load(STORAGE_KEYS.items, "food list", (d) => cleanList(d, cleanFoodItem), []);
   shoppingList = FridgeStorage.load(STORAGE_KEYS.shopping, "shopping list", (d) => cleanList(d, cleanShoppingEntry), []);
@@ -70,6 +75,7 @@ FridgeStorage.onStatusChange(showStorageStatus);
 /* If Ripeline is open in another tab and you change something there, update this tab too
    (so the two tabs never overwrite each other's changes). */
 FridgeStorage.onOtherTabChange(() => {
+  if (!appUnlocked) return;
   loadAllData();
   applyTheme();
   updateShoppingBadge();
@@ -337,7 +343,13 @@ function readAddress() {
 }
 
 function showScreen() {
-  const { name, detail } = readAddress();
+  let { name, detail } = readAddress();
+  // Locked: only the account screen (sign up / log in) can be shown.
+  // (The address isn't changed here: a link from a welcome email carries a code in it
+  //  that the account service still needs to read.)
+  if (!appUnlocked && name !== "account") {
+    name = "account"; detail = "";
+  }
   const screen = document.getElementById(SCREEN_ALIASES[name] || name) || document.getElementById(START_SCREEN);
 
   document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("is-active", s === screen));
@@ -398,7 +410,9 @@ window.addEventListener("load", scrollToTarget);
 const THEME_COLORS = { green: "#c1fbb0", peach: "#ffe4d2", lavender: "#ebe3ff", ocean: "#d6ecff" };
 
 function applyTheme() {
-  const theme = THEME_COLORS[profile.theme] ? profile.theme : "green";
+  // Before logging in, use the colour scheme last used on this device
+  const chosen = appUnlocked ? profile.theme : (FridgeStorage.loadDevice().theme || profile.theme);
+  const theme = THEME_COLORS[chosen] ? chosen : "green";
   document.documentElement.dataset.theme = theme;
   document.querySelector('meta[name="theme-color"]').setAttribute("content", THEME_COLORS[theme]);
 }
@@ -457,6 +471,7 @@ document.getElementById("theme-grid").addEventListener("click", (event) => {
   if (!tile) return;
   profile.theme = tile.dataset.themeChoice;
   saveProfile();
+  FridgeStorage.saveDevice({ ...FridgeStorage.loadDevice(), theme: profile.theme });
   applyTheme();
   renderProfile();
 });
@@ -467,15 +482,25 @@ document.getElementById("privacy-toggle").addEventListener("click", (event) => {
   event.currentTarget.setAttribute("aria-expanded", String(!panel.hidden));
   event.currentTarget.classList.toggle("is-open", !panel.hidden);
 });
-document.getElementById("delete-data").addEventListener("click", () => {
-  if (!confirm("Delete all Ripeline data on this device? This removes your food, shopping list, profile, preferences and any backups, and can't be undone.")) return;
-  if (!FridgeStorage.deleteEverything()) {
+document.getElementById("delete-data").addEventListener("click", async () => {
+  if (!confirm("Delete all your Ripeline data on this device? This removes your food, shopping list, profile, preferences and any backups, and logs you out. It can't be undone. (Your account itself stays; delete it from the account screen.)")) return;
+  if (!FridgeStorage.deleteAccountData()) {
     showToast("Couldn't delete the data. Try clearing this site's data in your browser settings.");
     return;
   }
-  location.hash = "#profile";
-  location.reload();
+  if (typeof signOutOfAccount === "function") await signOutOfAccount();
+  showToast("Your data was deleted from this device");
 });
+
+/* Re-apply saved preferences to the screens (after a different account's data is loaded) */
+function applyPrefsToViews() {
+  fridgeView.category = prefs.fridgeCategory;
+  fridgeView.sort = prefs.fridgeSort;
+  fridgeView.search = "";
+  recipeView.filter = prefs.recipeFilter;
+  recipeView.showing = RECIPES_PER_PAGE;
+  browseCategory = prefs.browseCategory;
+}
 
 /* Log out of your account. Your name, email, food and shopping list stay on this device,
    so logging back in is quick. (To erase everything, use Privacy Settings → Delete all my data.) */
