@@ -229,7 +229,7 @@ document.getElementById("account-form").addEventListener("submit", async (event)
     } else if (accountMode === "reset") {
       const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo: returnAddress() });
       if (error) throw error;
-      accountMessage(`If there's an account for ${email}, we've sent it a link to reset the password.`, "success");
+      accountMessage(`If there's an account for ${email}, we've sent it a link to reset the password. If you don't see the email, check your spam folder and mark it as not spam.`, "success");
     } else if (accountMode === "newPassword") {
       const { error } = await authClient.auth.updateUser({ password });
       if (error) throw error;
