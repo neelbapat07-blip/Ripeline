@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="leaf" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#68dd53"/>
+      <stop offset="1" stop-color="#b8f28f"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#184300"/>
+  <!-- leaf -->
+  <path d="M138 374 C130 226 232 138 384 128 C394 280 290 382 138 374 Z" fill="url(#leaf)"/>
+  <!-- the "line": a timeline running down the middle of the leaf -->
+  <path d="M112 400 L352 160" stroke="#184300" stroke-width="18" stroke-linecap="round"/>
+  <!-- ripeness dots: fresh -> ripe -> use it now -->
+  <circle cx="196" cy="316" r="27" fill="#68dd53" stroke="#184300" stroke-width="12"/>
+  <circle cx="260" cy="252" r="27" fill="#ffd23f" stroke="#184300" stroke-width="12"/>
+  <circle cx="324" cy="188" r="27" fill="#ff7438" stroke="#184300" stroke-width="12"/>
+</svg>
