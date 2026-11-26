@@ -1,17 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="leaf" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#68dd53"/>
-      <stop offset="1" stop-color="#b8f28f"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="116" fill="#184300"/>
-  <!-- leaf -->
-  <path d="M138 374 C130 226 232 138 384 128 C394 280 290 382 138 374 Z" fill="url(#leaf)"/>
-  <!-- the "line": a timeline running down the middle of the leaf -->
-  <path d="M112 400 L352 160" stroke="#184300" stroke-width="18" stroke-linecap="round"/>
-  <!-- ripeness dots: fresh -> ripe -> use it now -->
-  <circle cx="196" cy="316" r="27" fill="#68dd53" stroke="#184300" stroke-width="12"/>
-  <circle cx="260" cy="252" r="27" fill="#ffd23f" stroke="#184300" stroke-width="12"/>
-  <circle cx="324" cy="188" r="27" fill="#ff7438" stroke="#184300" stroke-width="12"/>
+  <rect width="512" height="512" rx="116" fill="#fff6ea"/>
+  <!-- stem and a small sprout at the top of the fruit -->
+  <path d="M256 150 C256 128 260 110 270 92" stroke="#5a3a1e" stroke-width="20" stroke-linecap="round" fill="none"/>
+  <path d="M272 112 C292 78 334 70 360 80 C350 110 312 128 272 112 Z" fill="#4cc24a"/>
+  <!-- the fruit outline is a timeline: fresh, ripe, use it now -->
+  <path d="M334.3 169.9 A140 140 0 0 1 379.6 351.7" stroke="#4cc24a" stroke-width="46" stroke-linecap="round" fill="none"/><path d="M342.2 396.3 A140 140 0 0 1 169.8 396.3" stroke="#ffc83d" stroke-width="46" stroke-linecap="round" fill="none"/><path d="M132.4 351.7 A140 140 0 0 1 177.7 169.9" stroke="#ff6a3d" stroke-width="46" stroke-linecap="round" fill="none"/>
+  <!-- a clock hand pointing at "use it now" -->
+  <path d="M256 286 L183.7 256.8" stroke="#2b2b2b" stroke-width="26" stroke-linecap="round"/>
+  <circle cx="256" cy="286" r="24" fill="#2b2b2b"/>
 </svg>
